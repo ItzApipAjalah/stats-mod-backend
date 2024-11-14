@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const playerRoutes = require('./routes/playerRoutes');
 const playerOnlineRoutes = require('./routes/playerOnlineRoutes');
+const chatRoutes = require('./routes/chatRoutes');
 
 const app = express();
 require('dotenv').config();
@@ -12,6 +13,7 @@ app.use(express.json());
 // Routes
 app.use('/api/players', playerRoutes);
 app.use('/api/player-online', playerOnlineRoutes);
+app.use('/api/chat', chatRoutes);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
