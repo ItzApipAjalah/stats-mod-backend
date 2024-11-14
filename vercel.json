@@ -1,16 +1,16 @@
 {
     "version": 2,
-    "name": "tiktok-downloader-api",
+    "name": "stats-backend",
     "builds": [
       {
-        "src": "index.js",
+        "src": "server.js",
         "use": "@vercel/node"
       }
     ],
     "routes": [
       {
         "src": "/(.*)",
-        "dest": "index.js"
+        "dest": "server.js"
       }
     ]
   }
