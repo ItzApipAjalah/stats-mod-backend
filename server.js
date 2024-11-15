@@ -4,6 +4,7 @@ const playerRoutes = require('./routes/playerRoutes');
 const playerOnlineRoutes = require('./routes/playerOnlineRoutes');
 const chatRoutes = require('./routes/chatRoutes');
 const ipWhitelist = require('./middleware/ipWhitelist');
+const tokenAuth = require('./middleware/tokenAuth');
 
 const app = express();
 require('dotenv').config();
@@ -15,13 +16,20 @@ app.set('trust proxy', true);
 
 app.use('/api/*', ipWhitelist);
 
+app.use('/api/*', (req, res, next) => {
+  if (req.method === 'GET' || req.path === '/') {
+    return next();
+  }
+  tokenAuth(req, res, next);
+});
+
 app.get('/', (req, res) => {
   const apiDocs = {
     name: "Player API Documentation",
     version: "1.0.0",
     base_url: `http://localhost:${process.env.PORT}`,
     access_control: {
-      type: "Domain & IP Whitelist",
+      type: "Domain & IP Whitelist + Token Auth",
       allowed: [
         "All *.vercel.app domains",
         "kizuserver.xyz",
@@ -32,7 +40,13 @@ app.get('/', (req, res) => {
         "76.76.21.9",
         "76.76.21.22",
         "185.128.227.192"
-      ]
+      ],
+      token_auth: {
+        required_for: "All non-GET methods",
+        header: "x-api-token",
+        query_param: "token",
+        example: "Your-API-Token-Here"
+      }
     },
     endpoints: [
       {
@@ -155,12 +169,13 @@ app.get('/', (req, res) => {
     ],
     examples: [
       {
-        name: "Create Player",
+        name: "Create Player (with token)",
         request: {
           method: "POST",
           path: "/api/players",
           headers: {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            "x-api-token": "Your-API-Token-Here"
           },
           body: {
             player_name: "Steve"
@@ -168,12 +183,13 @@ app.get('/', (req, res) => {
         }
       },
       {
-        name: "Player Join",
+        name: "Player Join (with token)",
         request: {
           method: "POST",
           path: "/api/player-online/join",
           headers: {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            "x-api-token": "Your-API-Token-Here"
           },
           body: {
             player_name: "Steve"
@@ -181,16 +197,27 @@ app.get('/', (req, res) => {
         }
       },
       {
-        name: "Send Message",
+        name: "Send Message (with token)",
         request: {
           method: "POST",
           path: "/api/chat",
           headers: {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            "x-api-token": "Your-API-Token-Here"
           },
           body: {
             player_name: "Steve",
             message: "Hello everyone!"
+          }
+        }
+      },
+      {
+        name: "Get Players (no token required)",
+        request: {
+          method: "GET",
+          path: "/api/players",
+          headers: {
+            "Content-Type": "application/json"
           }
         }
       }
