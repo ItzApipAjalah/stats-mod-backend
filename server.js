@@ -218,12 +218,11 @@ app.get('/', (req, res) => {
   res.json(apiDocs);
 });
 
-app.use('/api', ipWhitelist);
-app.use('/api', tokenAuth);
+const apiMiddleware = [ipWhitelist, tokenAuth];
 
-app.use('/api/players', playerRoutes);
-app.use('/api/player-online', playerOnlineRoutes);
-app.use('/api/chat', chatRoutes);
+app.use('/api/players', apiMiddleware, playerRoutes);
+app.use('/api/player-online', apiMiddleware, playerOnlineRoutes);
+app.use('/api/chat', apiMiddleware, chatRoutes);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
