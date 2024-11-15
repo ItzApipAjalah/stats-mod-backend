@@ -21,16 +21,17 @@ app.get('/', (req, res) => {
     version: "1.0.0",
     base_url: `http://localhost:${process.env.PORT}`,
     access_control: {
-      type: "IP Whitelist",
-      allowed_ips: [
+      type: "Domain & IP Whitelist",
+      allowed: [
+        "All *.vercel.app domains",
+        "kizuserver.xyz",
+        "gda.luckystore.id",
         "localhost",
         "127.0.0.1",
         "::1",
         "76.76.21.9",
         "76.76.21.22",
-        "185.128.227.192",
-        "stats-web-pi.vercel.app",
-        "kizuserver.xyz"
+        "185.128.227.192"
       ]
     },
     endpoints: [

@@ -4,12 +4,10 @@ const whitelist = [
   '::1',
   '76.76.21.9',
   '76.76.21.22',
-  '185.128.227.192',
-  'stats-web-pi.vercel.app',
-  'kizuserver.xyz'
+  '185.128.227.192'
 ];
 
-const ipWhitelist = (req, res, next) => {
+const ipWhitelist = async (req, res, next) => {
   let clientIp = req.headers['x-forwarded-for'] || 
                  req.connection.remoteAddress || 
                  req.socket.remoteAddress;
@@ -24,7 +22,9 @@ const ipWhitelist = (req, res, next) => {
 
   clientIp = clientIp.replace(/^::ffff:/, '');
 
+  const origin = req.headers.origin || req.headers.referer;
   console.log('Client IP:', clientIp);
+  console.log('Origin:', origin);
 
   if (clientIp === '::1' || clientIp === 'localhost' || clientIp === '127.0.0.1') {
     return next();
@@ -34,25 +34,24 @@ const ipWhitelist = (req, res, next) => {
     return next();
   }
 
-  const dns = require('dns');
-  const domains = ['gda.luckystore.id', 'stats-web-pi.vercel.app', 'kizuserver.xyz'];
-
-  for (const domain of domains) {
+  if (origin) {
     try {
-      dns.lookup(domain, (err, address) => {
-        if (!err && clientIp === address) {
-          return next();
-        }
-      });
+      const url = new URL(origin);
+      if (url.hostname.endsWith('.vercel.app') || 
+          url.hostname === 'kizuserver.xyz' || 
+          url.hostname === 'gda.luckystore.id') {
+        return next();
+      }
     } catch (error) {
-      console.error(`DNS lookup error for ${domain}:`, error);
+      console.error('URL parsing error:', error);
     }
   }
 
   return res.status(403).json({
     error: 'Access denied',
     message: 'Your IP address is not whitelisted',
-    ip: clientIp
+    ip: clientIp,
+    origin: origin || 'No origin'
   });
 };
 
