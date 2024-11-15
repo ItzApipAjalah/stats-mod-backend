@@ -218,11 +218,19 @@ app.get('/', (req, res) => {
   res.json(apiDocs);
 });
 
-const apiMiddleware = [ipWhitelist, tokenAuth];
+const protectedMiddleware = (req, res, next) => {
+  if (req.method === 'GET') {
+    return next();
+  }
+  ipWhitelist(req, res, (err) => {
+    if (err) return next(err);
+    tokenAuth(req, res, next);
+  });
+};
 
-app.use('/api/players', apiMiddleware, playerRoutes);
-app.use('/api/player-online', apiMiddleware, playerOnlineRoutes);
-app.use('/api/chat', apiMiddleware, chatRoutes);
+app.use('/api/players', protectedMiddleware, playerRoutes);
+app.use('/api/player-online', protectedMiddleware, playerOnlineRoutes);
+app.use('/api/chat', protectedMiddleware, chatRoutes);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
