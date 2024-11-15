@@ -17,7 +17,7 @@ app.set('trust proxy', true);
 app.use('/api/*', ipWhitelist);
 
 app.use('/api/*', (req, res, next) => {
-  if (req.method === 'GET' || req.path === '/') {
+  if (req.path === '/') {
     return next();
   }
   tokenAuth(req, res, next);
