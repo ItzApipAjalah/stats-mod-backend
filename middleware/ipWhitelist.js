@@ -22,9 +22,11 @@ const ipWhitelist = async (req, res, next) => {
 
   clientIp = clientIp.replace(/^::ffff:/, '');
 
-  const origin = req.headers.origin || req.headers.referer;
+  const origin = req.headers.origin || req.headers.referer || req.headers.host;
   console.log('Client IP:', clientIp);
   console.log('Origin:', origin);
+  console.log('Host:', req.headers.host);
+  console.log('All Headers:', req.headers);
 
   if (clientIp === '::1' || clientIp === 'localhost' || clientIp === '127.0.0.1') {
     return next();
@@ -34,24 +36,31 @@ const ipWhitelist = async (req, res, next) => {
     return next();
   }
 
-  if (origin) {
-    try {
-      const url = new URL(origin);
-      if (url.hostname.endsWith('.vercel.app') || 
-          url.hostname === 'kizuserver.xyz' || 
-          url.hostname === 'gda.luckystore.id') {
-        return next();
-      }
-    } catch (error) {
-      console.error('URL parsing error:', error);
-    }
+  const allowedDomains = [
+    'vercel.app',
+    'kizuserver.xyz',
+    'gda.luckystore.id'
+  ];
+
+  const isAllowedDomain = allowedDomains.some(domain => {
+    return (origin && origin.includes(domain)) || 
+           (req.headers.host && req.headers.host.includes(domain));
+  });
+
+  if (isAllowedDomain) {
+    return next();
+  }
+
+  if (process.env.NODE_ENV === 'development') {
+    return next();
   }
 
   return res.status(403).json({
     error: 'Access denied',
     message: 'Your IP address is not whitelisted',
     ip: clientIp,
-    origin: origin || 'No origin'
+    origin: origin || 'No origin',
+    host: req.headers.host || 'No host'
   });
 };
 

@@ -45,7 +45,7 @@ app.get('/', (req, res) => {
         required_for: "All non-GET methods",
         header: "x-api-token",
         query_param: "token",
-        example: "Your-API-Token-Here"
+        example: process.env.API_TOKEN
       }
     },
     endpoints: [
