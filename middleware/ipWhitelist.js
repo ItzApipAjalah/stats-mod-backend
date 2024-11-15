@@ -7,6 +7,12 @@ const whitelist = [
   '185.128.227.192'
 ];
 
+const allowedDomains = [
+  'stats-web-pi.vercel.app',
+  'kizuserver.xyz',
+  'gda.luckystore.id'
+];
+
 const ipWhitelist = async (req, res, next) => {
   let clientIp = req.headers['x-forwarded-for'] || 
                  req.connection.remoteAddress || 
@@ -22,45 +28,47 @@ const ipWhitelist = async (req, res, next) => {
 
   clientIp = clientIp.replace(/^::ffff:/, '');
 
-  const origin = req.headers.origin || req.headers.referer || req.headers.host;
+  const origin = req.headers.origin || req.headers.referer;
+  const host = req.headers.host;
+
   console.log('Client IP:', clientIp);
   console.log('Origin:', origin);
-  console.log('Host:', req.headers.host);
-  console.log('All Headers:', req.headers);
+  console.log('Host:', host);
 
-  if (clientIp === '::1' || clientIp === 'localhost' || clientIp === '127.0.0.1') {
-    return next();
-  }
-
+  // Check IP whitelist first
   if (whitelist.includes(clientIp)) {
     return next();
   }
 
-  const allowedDomains = [
-    'vercel.app',
-    'kizuserver.xyz',
-    'gda.luckystore.id'
-  ];
+  // Check exact domain matches
+  if (origin) {
+    try {
+      const url = new URL(origin);
+      if (allowedDomains.includes(url.hostname)) {
+        return next();
+      }
+    } catch (error) {
+      console.error('URL parsing error:', error);
+    }
+  }
 
-  const isAllowedDomain = allowedDomains.some(domain => {
-    return (origin && origin.includes(domain)) || 
-           (req.headers.host && req.headers.host.includes(domain));
-  });
-
-  if (isAllowedDomain) {
+  // Check host header for Vercel deployment
+  if (host && allowedDomains.includes(host)) {
     return next();
   }
 
-  if (process.env.NODE_ENV === 'development') {
+  // Development environment check
+  if (process.env.NODE_ENV === 'development' && 
+      (clientIp === '::1' || clientIp === 'localhost' || clientIp === '127.0.0.1')) {
     return next();
   }
 
   return res.status(403).json({
     error: 'Access denied',
-    message: 'Your IP address is not whitelisted',
+    message: 'Access not allowed from this origin',
     ip: clientIp,
     origin: origin || 'No origin',
-    host: req.headers.host || 'No host'
+    host: host || 'No host'
   });
 };
 
