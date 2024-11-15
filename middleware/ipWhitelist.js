@@ -4,7 +4,9 @@ const whitelist = [
   '::1',
   '76.76.21.9',
   '76.76.21.22',
-  '185.128.227.192'
+  '185.128.227.192',
+  'stats-web-pi.vercel.app',
+  'kizuserver.xyz'
 ];
 
 const ipWhitelist = (req, res, next) => {
@@ -32,15 +34,19 @@ const ipWhitelist = (req, res, next) => {
     return next();
   }
 
-  try {
-    const dns = require('dns');
-    dns.lookup('gda.luckystore.id', (err, address) => {
-      if (!err && clientIp === address) {
-        return next();
-      }
-    });
-  } catch (error) {
-    console.error('DNS lookup error:', error);
+  const dns = require('dns');
+  const domains = ['gda.luckystore.id', 'stats-web-pi.vercel.app', 'kizuserver.xyz'];
+
+  for (const domain of domains) {
+    try {
+      dns.lookup(domain, (err, address) => {
+        if (!err && clientIp === address) {
+          return next();
+        }
+      });
+    } catch (error) {
+      console.error(`DNS lookup error for ${domain}:`, error);
+    }
   }
 
   return res.status(403).json({

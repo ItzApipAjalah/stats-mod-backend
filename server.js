@@ -28,7 +28,9 @@ app.get('/', (req, res) => {
         "::1",
         "76.76.21.9",
         "76.76.21.22",
-        "185.128.227.192"
+        "185.128.227.192",
+        "stats-web-pi.vercel.app",
+        "kizuserver.xyz"
       ]
     },
     endpoints: [
