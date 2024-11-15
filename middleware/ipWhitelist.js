@@ -8,12 +8,21 @@ const whitelist = [
 ];
 
 const ipWhitelist = (req, res, next) => {
-  let clientIp = req.ip || 
+  let clientIp = req.headers['x-forwarded-for'] || 
                  req.connection.remoteAddress || 
-                 req.socket.remoteAddress || 
-                 req.connection.socket.remoteAddress;
+                 req.socket.remoteAddress;
+
+  if (Array.isArray(clientIp)) {
+    clientIp = clientIp[0];
+  }
+
+  if (typeof clientIp === 'string') {
+    clientIp = clientIp.split(',')[0].trim();
+  }
 
   clientIp = clientIp.replace(/^::ffff:/, '');
+
+  console.log('Client IP:', clientIp);
 
   if (clientIp === '::1' || clientIp === 'localhost' || clientIp === '127.0.0.1') {
     return next();
@@ -24,17 +33,20 @@ const ipWhitelist = (req, res, next) => {
   }
 
   try {
-    const hostname = require('dns').lookupSync('gda.luckystore.id').address;
-    if (clientIp === hostname) {
-      return next();
-    }
+    const dns = require('dns');
+    dns.lookup('gda.luckystore.id', (err, address) => {
+      if (!err && clientIp === address) {
+        return next();
+      }
+    });
   } catch (error) {
     console.error('DNS lookup error:', error);
   }
 
   return res.status(403).json({
     error: 'Access denied',
-    message: 'Your IP address is not whitelisted'
+    message: 'Your IP address is not whitelisted',
+    ip: clientIp
   });
 };
 

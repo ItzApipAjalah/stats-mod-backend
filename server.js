@@ -11,12 +11,9 @@ require('dotenv').config();
 app.use(cors());
 app.use(express.json());
 
-app.use((req, res, next) => {
-  if (req.path === '/') {
-    return next();
-  }
-  ipWhitelist(req, res, next);
-});
+app.set('trust proxy', true);
+
+app.use('/api/*', ipWhitelist);
 
 app.get('/', (req, res) => {
   const apiDocs = {
