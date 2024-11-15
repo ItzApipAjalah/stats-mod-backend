@@ -14,15 +14,6 @@ app.use(express.json());
 
 app.set('trust proxy', true);
 
-app.use('/api/*', ipWhitelist);
-
-app.use('/api/*', (req, res, next) => {
-  if (req.path === '/') {
-    return next();
-  }
-  tokenAuth(req, res, next);
-});
-
 app.get('/', (req, res) => {
   const apiDocs = {
     name: "Player API Documentation",
@@ -226,6 +217,9 @@ app.get('/', (req, res) => {
 
   res.json(apiDocs);
 });
+
+app.use('/api', ipWhitelist);
+app.use('/api', tokenAuth);
 
 app.use('/api/players', playerRoutes);
 app.use('/api/player-online', playerOnlineRoutes);
